@@ -2,7 +2,23 @@ import React, { useEffect, useState } from 'react'
 import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { db } from '../firebase'
 import { uploadToCloudinary } from '../cloudinary'
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
+
+function getAudioDuration(file){
+  return new Promise((resolve, reject)=>{
+    try{
+      const url = URL.createObjectURL(file)
+      const audio = new Audio()
+      audio.src = url
+      audio.addEventListener('loadedmetadata', ()=>{
+        const d = audio.duration
+        URL.revokeObjectURL(url)
+        resolve(isFinite(d) ? Math.round(d) : 0)
+      })
+      audio.addEventListener('error', (e)=>{ URL.revokeObjectURL(url); resolve(0) })
+    }catch(err){ resolve(0) }
+  })
+}
 
 export default function AdminModal({ onClose }){
   const [step, setStep] = useState('login')
@@ -12,6 +28,7 @@ export default function AdminModal({ onClose }){
   const [file, setFile] = useState(null)
   const [title, setTitle] = useState('')
   const [instructions, setInstructions] = useState('')
+  const [operatorPasswordInput, setOperatorPasswordInput] = useState('')
 
   useEffect(()=>{
     if(!db) return
@@ -41,14 +58,17 @@ export default function AdminModal({ onClose }){
     e.preventDefault()
     if(!file) return alert('Choose file')
     try{
+      const duration = await getAudioDuration(file)
       const res = await uploadToCloudinary(file)
       await addDoc(collection(db,'tracks'),{
         title: title || file.name,
         instructions,
-        url: res.secure_url,
+        audioUrl: res.secure_url,
         public_id: res.public_id,
         bytes: res.bytes,
-        createdAt: serverTimestamp()
+        duration,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       setTitle(''); setInstructions(''); setFile(null)
       alert('Uploaded')
@@ -69,7 +89,16 @@ export default function AdminModal({ onClose }){
   async function editInstructions(t){
     const ni = prompt('Edit instructions', t.instructions || '')
     if(ni==null) return
-    await updateDoc(doc(db,'tracks', t.id), { instructions: ni })
+    await updateDoc(doc(db,'tracks', t.id), { instructions: ni, updatedAt: serverTimestamp() })
+  }
+
+  async function updateOperatorPassword(){
+    if(!operatorPasswordInput) return alert('Enter new operator password')
+    try{
+      await setDoc(doc(db,'settings','config'), { operatorPassword: operatorPasswordInput }, { merge: true })
+      alert('Operator password updated')
+      setOperatorPasswordInput('')
+    }catch(err){ alert('Update failed: '+err.message) }
   }
 
   return (
@@ -96,6 +125,12 @@ export default function AdminModal({ onClose }){
               <button type="submit">Upload to Cloudinary</button>
             </form>
 
+            <div style={{marginTop:12}}>
+              <h4>Settings</h4>
+              <input placeholder="New operator password" value={operatorPasswordInput} onChange={e=> setOperatorPasswordInput(e.target.value)} />
+              <button onClick={updateOperatorPassword}>Update Operator Password</button>
+            </div>
+
             <div className="tracks-admin">
               <h4>Tracks</h4>
               {tracks.map(t=> (
@@ -103,9 +138,10 @@ export default function AdminModal({ onClose }){
                   <div>
                     <strong>{t.title}</strong>
                     <div className="small">{t.instructions}</div>
+                    <div className="small">Duration: {t.duration? t.duration+'s' : 'unknown'}</div>
                   </div>
                   <div className="actions">
-                    <a href={t.url} target="_blank" rel="noreferrer">Download</a>
+                    <a href={t.audioUrl} target="_blank" rel="noreferrer">Download</a>
                     <button onClick={()=> editInstructions(t)}>Edit</button>
                     <button onClick={()=> removeTrack(t)}>Delete</button>
                   </div>

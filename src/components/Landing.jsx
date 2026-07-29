@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, onSnapshot as onDocSnapshot } from 'firebase/firestore'
 import { db } from '../firebase'
 
 export default function Landing({ onSelectTrack }){
@@ -7,6 +7,7 @@ export default function Landing({ onSelectTrack }){
   const [password, setPassword] = useState('')
   const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(false)
+  const [operatorPass, setOperatorPass] = useState(null)
 
   useEffect(()=>{
     if(!db) return
@@ -31,11 +32,24 @@ export default function Landing({ onSelectTrack }){
     return ()=> document.removeEventListener('visibilitychange', onVis)
   },[])
 
-  const operatorPass = import.meta.env.VITE_OPERATOR_PASSWORD || 'Music@123'
+  useEffect(()=>{
+    if(!db) return
+    const settingsRef = doc(db, 'settings', 'config')
+    const unsub = onDocSnapshot(settingsRef, snap=>{
+      if(snap.exists()){
+        const data = snap.data()
+        setOperatorPass(data.operatorPassword || import.meta.env.VITE_OPERATOR_PASSWORD || 'Music@123')
+      }else{
+        setOperatorPass(import.meta.env.VITE_OPERATOR_PASSWORD || 'Music@123')
+      }
+    })
+    return ()=> unsub()
+  },[])
 
   function tryUnlock(e){
     e.preventDefault()
-    if(password === operatorPass) setUnlocked(true)
+    const pass = operatorPass || import.meta.env.VITE_OPERATOR_PASSWORD || 'Music@123'
+    if(password === pass) setUnlocked(true)
     else alert('Ghalat password')
   }
 
