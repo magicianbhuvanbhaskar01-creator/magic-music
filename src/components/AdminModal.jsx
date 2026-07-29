@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { getAuth, signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth'
 import { db } from '../firebase'
 import { uploadToCloudinary } from '../cloudinary'
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore'
@@ -29,6 +29,8 @@ export default function AdminModal({ onClose }){
   const [title, setTitle] = useState('')
   const [instructions, setInstructions] = useState('')
   const [operatorPasswordInput, setOperatorPasswordInput] = useState('')
+  const [currentAdminPassword, setCurrentAdminPassword] = useState('')
+  const [newAdminPassword, setNewAdminPassword] = useState('')
 
   useEffect(()=>{
     if(!db) return
@@ -101,6 +103,21 @@ export default function AdminModal({ onClose }){
     }catch(err){ alert('Update failed: '+err.message) }
   }
 
+  async function changeAdminPassword(){
+    if(!currentAdminPassword || !newAdminPassword) return alert('Enter current and new password')
+    try{
+      const auth = getAuth()
+      const user = auth.currentUser
+      if(!user){ alert('Not logged in'); return }
+      // Reauthenticate by signing in again
+      await signInWithEmailAndPassword(auth, user.email, currentAdminPassword)
+      await updatePassword(auth.currentUser, newAdminPassword)
+      alert('Admin password updated')
+      setCurrentAdminPassword('')
+      setNewAdminPassword('')
+    }catch(err){ alert('Password change failed: '+err.message) }
+  }
+
   return (
     <div className="admin-modal">
       <div className="admin-box">
@@ -129,6 +146,13 @@ export default function AdminModal({ onClose }){
               <h4>Settings</h4>
               <input placeholder="New operator password" value={operatorPasswordInput} onChange={e=> setOperatorPasswordInput(e.target.value)} />
               <button onClick={updateOperatorPassword}>Update Operator Password</button>
+
+              <div style={{marginTop:8}}>
+                <h5>Change Admin Password</h5>
+                <input placeholder="Current password" type="password" value={currentAdminPassword} onChange={e=> setCurrentAdminPassword(e.target.value)} />
+                <input placeholder="New password" type="password" value={newAdminPassword} onChange={e=> setNewAdminPassword(e.target.value)} />
+                <button onClick={changeAdminPassword}>Change Admin Password</button>
+              </div>
             </div>
 
             <div className="tracks-admin">
