@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /tracks/{trackId} {
+      // Anyone can read tracks (operators)
+      allow read: if true;
+      // Only the specific admin email can create/update/delete
+      allow create, update, delete: if request.auth != null && request.auth.token.email == 'bhuvanbhaskar924@gmail.com';
+    }
+
+    // Default: deny writes to other collections
+    match /{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
