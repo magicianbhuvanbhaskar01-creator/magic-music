@@ -1,29 +1,23 @@
 import React, { useEffect, useState } from 'react'
-
 import Landing from './components/Landing'
 import Player from './components/Player'
 import AdminModal from './components/AdminModal'
+import { initFirebase } from './firebase'
+
+initFirebase()
 
 export default function App() {
   const [showAdmin, setShowAdmin] = useState(false)
   const [adminClicks, setAdminClicks] = useState(0)
   const [selectedTrack, setSelectedTrack] = useState(null)
 
-  // 7 clicks within 3 seconds = Admin Panel
+  // 7 clicks anywhere → Admin Panel
   useEffect(() => {
-    if (adminClicks === 0) return
+    let timer
 
-    const timer = setTimeout(() => {
-      setAdminClicks(0)
-    }, 3000)
-
-    return () => clearTimeout(timer)
-  }, [adminClicks])
-
-  useEffect(() => {
-    function handleGlobalClick() {
-      setAdminClicks(current => {
-        const next = current + 1
+    const handleClick = () => {
+      setAdminClicks(prev => {
+        const next = prev + 1
 
         if (next >= 7) {
           setShowAdmin(true)
@@ -32,30 +26,19 @@ export default function App() {
 
         return next
       })
+
+      clearTimeout(timer)
+
+      timer = setTimeout(() => {
+        setAdminClicks(0)
+      }, 3000)
     }
 
-    window.addEventListener('click', handleGlobalClick)
+    window.addEventListener('click', handleClick)
 
     return () => {
-      window.removeEventListener('click', handleGlobalClick)
-    }
-  }, [])
-
-  // Close player when browser/tab becomes hidden
-  useEffect(() => {
-    function handleVisibility() {
-      if (document.hidden) {
-        setSelectedTrack(null)
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibility)
-
-    return () => {
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisibility
-      )
+      window.removeEventListener('click', handleClick)
+      clearTimeout(timer)
     }
   }, [])
 
@@ -63,7 +46,7 @@ export default function App() {
     <div className="app-root">
 
       <Landing
-        onSelectTrack={track => {
+        onSelectTrack={(track) => {
           setSelectedTrack(track)
         }}
       />
@@ -71,18 +54,13 @@ export default function App() {
       {selectedTrack && (
         <Player
           track={selectedTrack}
-          onClose={() => {
-            setSelectedTrack(null)
-          }}
+          onClose={() => setSelectedTrack(null)}
         />
       )}
 
       {showAdmin && (
         <AdminModal
-          onClose={() => {
-            setShowAdmin(false)
-            setAdminClicks(0)
-          }}
+          onClose={() => setShowAdmin(false)}
         />
       )}
 
