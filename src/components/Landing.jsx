@@ -9,6 +9,22 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 
+const DEFAULT_OPERATOR_PASSWORD_HASH =
+  '10d0babae0f518ec6a5d49e740bf6ffb55bac87613674c7ebb11734148561663'
+
+async function hashPassword(password) {
+  const data = new TextEncoder().encode(password)
+
+  const hashBuffer = await crypto.subtle.digest(
+    'SHA-256',
+    data
+  )
+
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 export default function Landing({ onSelectTrack }) {
   const [unlocked, setUnlocked] = useState(false)
   const [password, setPassword] = useState('')
@@ -18,7 +34,7 @@ export default function Landing({ onSelectTrack }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!db) return
+    if (!unlocked || !db) return
 
     setLoading(true)
 
@@ -30,45 +46,63 @@ export default function Landing({ onSelectTrack }) {
     const unsubscribe = onSnapshot(
       q,
       snapshot => {
-        const list = snapshot.docs.map(item => ({
-          id: item.id,
-          ...item.data()
-        }))
+        setTracks(
+          snapshot.docs.map(item => ({
+            id: item.id,
+            ...item.data()
+          }))
+        )
 
-        setTracks(list)
         setLoading(false)
       },
-      err => {
-        console.error(err)
+      error => {
+        console.error(error)
+        setError('Music load nahi ho saka.')
         setLoading(false)
       }
     )
 
     return () => unsubscribe()
-  }, [])
+  }, [unlocked])
 
   useEffect(() => {
-    if (!db) return
+    if (!unlocked || !db) return
 
-    const settingsRef = doc(db, 'settings', 'config')
+    const settingsRef = doc(
+      db,
+      'settings',
+      'config'
+    )
 
-    getDoc(settingsRef)
-      .then(snapshot => {
+    const unsubscribe = onSnapshot(
+      settingsRef,
+      snapshot => {
         if (snapshot.exists()) {
           const data = snapshot.data()
-          setInstructions(data.instructions || '')
+
+          setInstructions(
+            data.instructions || ''
+          )
         }
-      })
-      .catch(error => {
-        console.error('Instructions error:', error)
-      })
-  }, [])
+      },
+      error => {
+        console.error(
+          'Instructions error:',
+          error
+        )
+      }
+    )
+
+    return () => unsubscribe()
+  }, [unlocked])
 
   useEffect(() => {
-    const handleVisibility = () => {
+    function handleVisibility() {
       if (document.hidden) {
         setUnlocked(false)
         setPassword('')
+        setTracks([])
+        setInstructions('')
       }
     }
 
@@ -85,197 +119,295 @@ export default function Landing({ onSelectTrack }) {
     }
   }, [])
 
-  async function unlockSite(e) {
-    e.preventDefault()
+  async function unlockSite(event) {
+    event.preventDefault()
 
-    if (!db) {
-      setError('Database unavailable')
+    if (!password.trim()) {
+      setError('Password enter karo.')
       return
     }
 
-    try {
-      const settingsRef = doc(db, 'settings', 'config')
-      const snapshot = await getDoc(settingsRef)
+    if (!db) {
+      setError('Database unavailable.')
+      return
+    }
 
-      if (!snapshot.exists()) {
-        setError('Password settings not found')
-        return
+    setLoading(true)
+    setError('')
+
+    try {
+      const settingsRef = doc(
+        db,
+        'settings',
+        'config'
+      )
+
+      const snapshot = await getDoc(
+        settingsRef
+      )
+
+      let correctHash =
+        DEFAULT_OPERATOR_PASSWORD_HASH
+
+      if (snapshot.exists()) {
+        const data = snapshot.data()
+
+        /*
+         * New secure password system
+         */
+        if (
+          typeof data.operatorPasswordHash ===
+            'string' &&
+          data.operatorPasswordHash.length > 0
+        ) {
+          correctHash =
+            data.operatorPasswordHash
+        }
+
+        /*
+         * Compatibility with the old
+         * operatorPassword field.
+         */
+        else if (
+          typeof data.operatorPassword ===
+            'string' &&
+          data.operatorPassword.length > 0
+        ) {
+          correctHash =
+            await hashPassword(
+              data.operatorPassword
+            )
+        }
       }
 
-      const data = snapshot.data()
-      const correctPassword = data.operatorPassword
+      const enteredHash =
+        await hashPassword(password)
 
-      if (password === correctPassword) {
+      if (enteredHash === correctHash) {
         setUnlocked(true)
         setPassword('')
         setError('')
       } else {
-        setError('❌ Incorrect password')
+        setError('❌ Incorrect password.')
         setPassword('')
       }
-    } catch (err) {
-      console.error(err)
-      setError('Unable to verify password')
+    } catch (error) {
+      console.error(
+        'Password verification error:',
+        error
+      )
+
+      setError(
+        'Unable to verify password.'
+      )
+    } finally {
+      setLoading(false)
     }
+  }
+
+  function lockSite() {
+    setUnlocked(false)
+    setPassword('')
+    setTracks([])
+    setInstructions('')
   }
 
   if (!unlocked) {
     return (
-      <div className="landing">
-        <div className="pw-box">
-          <div className="magic-icon">🪄</div>
+      <main className="login-page">
 
-          <h1>MAGIC MUSIC</h1>
+        <div className="login-card">
 
-          <p className="welcome">
+          <div className="magic-symbol">
+            🪄
+          </div>
+
+          <h1>
+            MAGIC MUSIC
+          </h1>
+
+          <p className="subtitle">
             Hello Magician Bhuvan
           </p>
 
-          <p className="subtitle">
-            Enter operator password to continue
-          </p>
-
           <form onSubmit={unlockSite}>
+
             <input
               type="password"
               value={password}
               placeholder="Enter Password"
               autoComplete="off"
-              onChange={e => setPassword(e.target.value)}
+              maxLength={100}
+              onChange={event =>
+                setPassword(
+                  event.target.value
+                )
+              }
             />
 
-            <button type="submit">
-              OPEN MUSIC
+            <button
+              type="submit"
+              disabled={loading}
+            >
+              {loading
+                ? 'OPENING...'
+                : 'OPEN MUSIC'}
             </button>
+
           </form>
 
           {error && (
-            <p className="login-error">
+            <p className="error-text">
               {error}
             </p>
           )}
+
+          <p className="login-note">
+            Private operator access
+          </p>
+
         </div>
-      </div>
+
+      </main>
     )
   }
 
   return (
-    <div className="landing unlocked">
+    <main className="music-page">
 
-      <div className="music-header">
+      <header className="music-header">
+
         <div>
           <div className="brand-small">
             🪄 MAGIC MUSIC
           </div>
 
           <h2>
-            Bhuvan's Magic Music
+            Choose Music
           </h2>
         </div>
-      </div>
 
-      <div className="track-list">
+        <button
+          className="small-logout"
+          onClick={lockSite}
+        >
+          🔒 Lock
+        </button>
+
+      </header>
+
+      <section className="track-list">
 
         {loading && (
-          <div className="loading">
+          <div className="empty-state">
             Loading music...
           </div>
         )}
 
-        {!loading && tracks.length === 0 && (
-          <div className="empty">
-            No music uploaded yet
-          </div>
-        )}
+        {!loading &&
+          tracks.map(track => (
+            <button
+              className="track-card"
+              key={track.id}
+              onClick={() =>
+                onSelectTrack(track)
+              }
+            >
 
-        {tracks.map(track => (
-          <button
-            key={track.id}
-            className="track-card"
-            onClick={() => onSelectTrack(track)}
-          >
-            <div className="track-icon">
-              ▶
-            </div>
-
-            <div className="track-info">
-              <div className="track-title">
-                {track.title || 'Untitled Track'}
+              <div className="track-icon">
+                🎵
               </div>
 
-              {track.duration > 0 && (
-                <div className="track-duration">
-                  {formatDuration(track.duration)}
-                </div>
-              )}
+              <div className="track-info">
+
+                <strong>
+                  {track.title ||
+                    'Untitled'}
+                </strong>
+
+                <span>
+                  {track.duration
+                    ? formatDuration(
+                        track.duration
+                      )
+                    : 'Audio track'}
+                </span>
+
+              </div>
+
+              <div className="track-arrow">
+                ›
+              </div>
+
+            </button>
+          ))}
+
+        {!loading &&
+          tracks.length === 0 && (
+            <div className="empty-state">
+              No music uploaded yet.
             </div>
+          )}
 
-            <div className="track-arrow">
-              ›
-            </div>
-          </button>
-        ))}
+      </section>
 
-      </div>
+      <section className="instructions-card">
 
-      <div className="operator-instructions">
-
-        <h3>
+        <div className="section-title">
           📝 Operator Instructions
-        </h3>
+        </div>
 
-        {instructions ? (
-          <div className="instructions-content">
-            {instructions
+        <div className="instruction-content">
+
+          {instructions ? (
+            instructions
               .split('\n')
               .filter(line => line.trim())
               .map((line, index) => (
-                <div
-                  key={index}
-                  className="instruction-line"
-                >
-                  <span>•</span>
-                  <span>{line.trim()}</span>
-                </div>
-              ))}
-          </div>
-        ) : (
-          <div className="instructions-content">
-            <div className="instruction-line">
-              <span>•</span>
-              <span>
-                Jab main kisi audience ko stage par bulaun,
-                music slow ya band kar dena.
-              </span>
-            </div>
+                <p key={index}>
+                  • {line.trim()}
+                </p>
+              ))
+          ) : (
+            <>
+              <p>
+                • Jab audience ko stage par
+                bulao, music slow ya band
+                kar dena.
+              </p>
 
-            <div className="instruction-line">
-              <span>•</span>
-              <span>
-                Jab main akele stage par magic karun,
-                sound full rakhna.
-              </span>
-            </div>
-          </div>
-        )}
+              <p>
+                • Jab main akele stage par
+                magic karu, sound full rakhna.
+              </p>
 
-      </div>
+              <p>
+                • Show ke situation ke
+                according volume adjust karna.
+              </p>
+            </>
+          )}
 
-    </div>
+        </div>
+
+      </section>
+
+    </main>
   )
 }
 
 function formatDuration(seconds) {
-  const total = Math.round(Number(seconds))
+  const total = Number(seconds)
 
-  if (!total || total < 1) {
+  if (!Number.isFinite(total) || total <= 0) {
     return ''
   }
 
   const minutes = Math.floor(total / 60)
-  const secs = total % 60
+  const secs = Math.floor(total % 60)
 
-  return `${minutes}:${secs
-    .toString()
-    .padStart(2, '0')}`
+  return `${minutes}:${String(secs).padStart(
+    2,
+    '0'
+  )}`
 }
