@@ -10,9 +10,8 @@ export default function Player({ track, onClose }) {
     Number(track?.duration) || 0
   )
 
-  /*
-   * Start selected track
-   */
+  const audioUrl = track?.audioUrl || ''
+
   useEffect(() => {
     const audio = audioRef.current
 
@@ -20,29 +19,11 @@ export default function Player({ track, onClose }) {
 
     audio.volume = volume
 
-    audio.load()
-
-    const playPromise = audio.play()
-
-    if (playPromise) {
-      playPromise
-        .then(() => {
-          setPlaying(true)
-        })
-        .catch(() => {
-          setPlaying(false)
-        })
-    }
-
     return () => {
       audio.pause()
-      audio.currentTime = 0
     }
-  }, [track])
+  }, [])
 
-  /*
-   * Volume
-   */
   useEffect(() => {
     const audio = audioRef.current
 
@@ -51,37 +32,6 @@ export default function Player({ track, onClose }) {
     audio.volume = volume
   }, [volume])
 
-  /*
-   * Pause when browser/tab becomes hidden
-   */
-  useEffect(() => {
-    function handleVisibility() {
-      const audio = audioRef.current
-
-      if (!audio) return
-
-      if (document.hidden) {
-        audio.pause()
-        setPlaying(false)
-      }
-    }
-
-    document.addEventListener(
-      'visibilitychange',
-      handleVisibility
-    )
-
-    return () => {
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisibility
-      )
-    }
-  }, [])
-
-  /*
-   * Audio events
-   */
   useEffect(() => {
     const audio = audioRef.current
 
@@ -97,14 +47,6 @@ export default function Player({ track, onClose }) {
       setCurrentTime(audio.currentTime)
     }
 
-    function handlePlay() {
-      setPlaying(true)
-    }
-
-    function handlePause() {
-      setPlaying(false)
-    }
-
     function handleEnded() {
       setPlaying(false)
       setCurrentTime(0)
@@ -118,16 +60,6 @@ export default function Player({ track, onClose }) {
     audio.addEventListener(
       'timeupdate',
       handleTimeUpdate
-    )
-
-    audio.addEventListener(
-      'play',
-      handlePlay
-    )
-
-    audio.addEventListener(
-      'pause',
-      handlePause
     )
 
     audio.addEventListener(
@@ -147,49 +79,72 @@ export default function Player({ track, onClose }) {
       )
 
       audio.removeEventListener(
-        'play',
-        handlePlay
-      )
-
-      audio.removeEventListener(
-        'pause',
-        handlePause
-      )
-
-      audio.removeEventListener(
         'ended',
         handleEnded
       )
     }
   }, [])
 
-  function togglePlay() {
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.hidden) {
+        const audio = audioRef.current
+
+        if (audio) {
+          audio.pause()
+        }
+
+        setPlaying(false)
+      }
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibility
+    )
+
+    return () => {
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibility
+      )
+    }
+  }, [])
+
+  async function togglePlay() {
     const audio = audioRef.current
 
-    if (!audio) return
+    if (!audio || !audioUrl) return
 
-    if (audio.paused) {
-      audio
-        .play()
-        .then(() => {
-          setPlaying(true)
-        })
-        .catch(() => {
-          setPlaying(false)
-        })
-    } else {
-      audio.pause()
+    try {
+      if (audio.paused) {
+        await audio.play()
+        setPlaying(true)
+      } else {
+        audio.pause()
+        setPlaying(false)
+      }
+    } catch (error) {
+      console.error(
+        'Audio playback error:',
+        error
+      )
+
       setPlaying(false)
     }
   }
 
-  function handleVolumeChange(event) {
+  function changeVolume(event) {
     const value = Number(event.target.value)
 
     setVolume(value)
+
+    if (audioRef.current) {
+      audioRef.current.volume = value
+    }
   }
 
-  function handleClose() {
+  function closePlayer() {
     const audio = audioRef.current
 
     if (audio) {
@@ -198,46 +153,32 @@ export default function Player({ track, onClose }) {
     }
 
     setPlaying(false)
-
     onClose()
   }
 
   function formatTime(value) {
-    if (!Number.isFinite(value) || value < 0) {
-      return '0:00'
-    }
+    const seconds = Math.floor(
+      Number(value) || 0
+    )
 
-    const minutes = Math.floor(value / 60)
-    const seconds = Math.floor(value % 60)
+    const minutes = Math.floor(
+      seconds / 60
+    )
 
-    return `${minutes}:${String(seconds).padStart(2, '0')}`
-  }
+    const remaining =
+      seconds % 60
 
-  if (!track) {
-    return null
+    return `${minutes}:${String(
+      remaining
+    ).padStart(2, '0')}`
   }
 
   return (
-    <div
-      className="player-fullscreen"
-      onContextMenu={event => event.preventDefault()}
-    >
+    <div className="player-full">
 
-      <audio
-        ref={audioRef}
-        src={track.audioUrl}
-        preload="auto"
-        controls={false}
-        controlsList="nodownload noplaybackrate"
-        onContextMenu={event =>
-          event.preventDefault()
-        }
-      />
-
-      {/* Close */}
       <button
         className="player-close"
-        onClick={handleClose}
+        onClick={closePlayer}
         aria-label="Close player"
       >
         ✕
@@ -245,78 +186,134 @@ export default function Player({ track, onClose }) {
 
       <div className="player-content">
 
-        <div className="player-magic-icon">
-          🪄
+        <div className="player-icon">
+          🎵
         </div>
-
-        <p className="player-label">
-          NOW PLAYING
-        </p>
 
         <h1 className="player-title">
-          {track.title || 'Untitled'}
+          {track?.title ||
+            'Magic Music'}
         </h1>
 
-        <p className="player-instructions">
-          {track.instructions ||
-            'Use volume according to the show.'}
+        <p className="player-subtitle">
+          Bhuvan Magic
         </p>
 
-        {/* Play / Pause */}
-        <button
-          className="big-play-button"
-          onClick={togglePlay}
-          aria-label={
-            playing ? 'Pause music' : 'Play music'
-          }
-        >
-          {playing ? '❚❚' : '▶'}
-        </button>
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          preload="metadata"
+        />
 
-        <div className="play-status">
-          {playing ? 'Playing' : 'Paused'}
+        {!audioUrl ? (
+          <p className="player-error">
+            Audio file unavailable.
+          </p>
+        ) : (
+          <>
+            <button
+              className="big-play"
+              onClick={togglePlay}
+              aria-label={
+                playing
+                  ? 'Pause'
+                  : 'Play'
+              }
+            >
+              {playing ? '❚❚' : '▶'}
+            </button>
+
+            <div className="progress-area">
+
+              <div className="time-row">
+                <span>
+                  {formatTime(
+                    currentTime
+                  )}
+                </span>
+
+                <span>
+                  {formatTime(
+                    duration
+                  )}
+                </span>
+              </div>
+
+              <div className="progress-background">
+                <div
+                  className="progress-current"
+                  style={{
+                    width:
+                      duration > 0
+                        ? `${Math.min(
+                            100,
+                            (currentTime /
+                              duration) *
+                              100
+                          )}%`
+                        : '0%'
+                  }}
+                />
+              </div>
+
+            </div>
+
+            <div className="volume-area">
+
+              <div className="volume-label">
+                🔊 Volume
+              </div>
+
+              <input
+                className="volume-slider-large"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={
+                  changeVolume
+                }
+                aria-label="Volume"
+              />
+
+              <div className="volume-value">
+                {Math.round(
+                  volume * 100
+                )}%
+              </div>
+
+            </div>
+
+          </>
+        )}
+
+        <div className="player-instructions">
+          {track?.instructions ? (
+            <>
+              <h3>
+                📝 Instructions
+              </h3>
+
+              <div>
+                {track.instructions
+                  .split('\n')
+                  .filter(line =>
+                    line.trim()
+                  )
+                  .map(
+                    (line, index) => (
+                      <p key={index}>
+                        {line}
+                      </p>
+                    )
+                  )}
+              </div>
+            </>
+          ) : null}
         </div>
-
-        {/* Time */}
-        <div className="time-row">
-          <span>
-            {formatTime(currentTime)}
-          </span>
-
-          <span>
-            {formatTime(duration)}
-          </span>
-        </div>
-
-        {/* Large volume control */}
-        <div className="volume-area">
-
-          <div className="volume-heading">
-            <span>🔊</span>
-            <span>VOLUME</span>
-            <strong>
-              {Math.round(volume * 100)}%
-            </strong>
-          </div>
-
-          <input
-            className="big-volume-slider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={handleVolumeChange}
-            aria-label="Volume"
-          />
-
-        </div>
-
-        <p className="privacy-note">
-          Private Magic Music
-        </p>
 
       </div>
     </div>
   )
-      }
+            }
