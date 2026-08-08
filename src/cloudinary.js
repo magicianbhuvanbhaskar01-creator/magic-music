@@ -1,5 +1,5 @@
 const CLOUDINARY_CLOUD_NAME = 'u3elvi6g'
-const CLOUDINARY_UPLOAD_PRESET = 'magic_music'
+const CLOUDINARY_UPLOAD_PRESET = 'magician_unsigned'
 
 export async function uploadToCloudinary(file) {
   if (!file) {
