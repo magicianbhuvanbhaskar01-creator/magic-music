@@ -977,5 +977,3 @@ export default function AdminModal({ onClose }) {
     </div>
   )
 }
-
-function forma
