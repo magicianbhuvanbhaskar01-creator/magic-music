@@ -11,36 +11,51 @@ export default function App() {
   const [adminClicks, setAdminClicks] = useState(0)
   const [selectedTrack, setSelectedTrack] = useState(null)
 
-  // 7 clicks anywhere → Admin Panel
-  useEffect(() => {
-    let timer
+  // 7 consecutive rapid taps → Admin Panel
+useEffect(() => {
+  let timer = null
 
-    const handleClick = () => {
-      setAdminClicks(prev => {
-        const next = prev + 1
+  const handleClick = () => {
+    setAdminClicks(prev => {
+      const next = prev + 1
 
-        if (next >= 7) {
-          setShowAdmin(true)
-          return 0
+      // Exactly 7 consecutive taps
+      if (next === 7) {
+        setShowAdmin(true)
+
+        if (timer) {
+          clearTimeout(timer)
+          timer = null
         }
 
-        return next
-      })
+        return 0
+      }
 
-      clearTimeout(timer)
+      return next
+    })
 
-      timer = setTimeout(() => {
-        setAdminClicks(0)
-      }, 3000)
-    }
-
-    window.addEventListener('click', handleClick)
-
-    return () => {
-      window.removeEventListener('click', handleClick)
+    // If the next tap doesn't happen quickly,
+    // the sequence starts again from 0.
+    if (timer) {
       clearTimeout(timer)
     }
-  }, [])
+
+    timer = setTimeout(() => {
+      setAdminClicks(0)
+      timer = null
+    }, 1000)
+  }
+
+  window.addEventListener('click', handleClick)
+
+  return () => {
+    window.removeEventListener('click', handleClick)
+
+    if (timer) {
+      clearTimeout(timer)
+    }
+  }
+}, [])
 
   return (
     <div className="app-root">
