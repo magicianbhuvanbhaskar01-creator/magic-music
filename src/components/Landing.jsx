@@ -3,17 +3,32 @@ import {
   collection,
   query,
   orderBy,
-  onSnapshot
+  onSnapshot,
+  doc
 } from 'firebase/firestore'
-import {
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from 'firebase/auth'
 
-import { auth, db } from '../firebase'
+import { db } from '../firebase'
 
-const OPERATOR_EMAIL = 'operator@magicmusic.com'
+const DEFAULT_OPERATOR_PASSWORD_HASH =
+  '10d0babae0f518ec6a5d49e740bf6ffb55bac87613674c7ebb11734148561663'
+
+async function hashPassword(password) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password)
+
+  const hashBuffer = await crypto.subtle.digest(
+    'SHA-256',
+    data
+  )
+
+  const hashArray = Array.from(
+    new Uint8Array(hashBuffer)
+  )
+
+  return hashArray
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
 
 export default function Landing({ onSelectTrack }) {
   const [unlocked, setUnlocked] = useState(false)
@@ -23,20 +38,9 @@ export default function Landing({ onSelectTrack }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Check operator login session
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      if (user && user.email === OPERATOR_EMAIL) {
-        setUnlocked(true)
-      } else {
-        setUnlocked(false)
-      }
-    })
-
-    return () => unsubscribe()
-  }, [])
-
-  // Load music only after operator login
+  /*
+   * Load tracks only after password unlock.
+   */
   useEffect(() => {
     if (!unlocked) {
       setTracks([])
@@ -44,6 +48,7 @@ export default function Landing({ onSelectTrack }) {
     }
 
     setLoading(true)
+    setError('')
 
     const tracksQuery = query(
       collection(db, 'tracks'),
@@ -62,7 +67,7 @@ export default function Landing({ onSelectTrack }) {
         setLoading(false)
       },
       err => {
-        console.error('Music loading error:', err)
+        console.error('Tracks error:', err)
         setError('Music load nahi ho saka.')
         setLoading(false)
       }
@@ -71,53 +76,56 @@ export default function Landing({ onSelectTrack }) {
     return () => unsubscribe()
   }, [unlocked])
 
-  // Load operator instructions
+  /*
+   * Load operator instructions.
+   */
   useEffect(() => {
     if (!unlocked) {
       setInstructions('')
       return
     }
 
-    const instructionsRef = query(
-      collection(db, 'settings')
+    const settingsRef = doc(
+      db,
+      'settings',
+      'config'
     )
 
     const unsubscribe = onSnapshot(
-      instructionsRef,
+      settingsRef,
       snapshot => {
-        const publicSettings = snapshot.docs.find(
-          item => item.id === 'public'
-        )
+        if (snapshot.exists()) {
+          const data = snapshot.data()
 
-        if (publicSettings) {
           setInstructions(
-            publicSettings.data().instructions || ''
+            data.instructions || ''
           )
         } else {
           setInstructions('')
         }
       },
       err => {
-        console.error('Instruction loading error:', err)
+        console.error(
+          'Instructions error:',
+          err
+        )
       }
     )
 
     return () => unsubscribe()
   }, [unlocked])
 
-  // Lock the operator session when leaving the page/tab
+  /*
+   * Automatically lock when the browser/tab
+   * becomes hidden.
+   */
   useEffect(() => {
-    async function handleVisibility() {
-      if (document.hidden && auth.currentUser) {
-        try {
-          await signOut(auth)
-        } catch (err) {
-          console.error(err)
-        }
-
+    function handleVisibility() {
+      if (document.hidden) {
         setUnlocked(false)
         setPassword('')
         setTracks([])
+        setInstructions('')
       }
     }
 
@@ -146,39 +154,77 @@ export default function Landing({ onSelectTrack }) {
     setError('')
 
     try {
-      await signInWithEmailAndPassword(
-        auth,
-        OPERATOR_EMAIL,
-        password
+      const enteredHash =
+        await hashPassword(password)
+
+      const settingsRef = doc(
+        db,
+        'settings',
+        'config'
       )
 
-      setPassword('')
-      setUnlocked(true)
+      let storedHash =
+        DEFAULT_OPERATOR_PASSWORD_HASH
+
+      /*
+       * Read the password hash from Firestore.
+       * If the document does not exist yet,
+       * the default Music@123 hash is used.
+       */
+      try {
+        const { getDoc } = await import(
+          'firebase/firestore'
+        )
+
+        const snapshot =
+          await getDoc(settingsRef)
+
+        if (snapshot.exists()) {
+          const data = snapshot.data()
+
+          if (
+            typeof data.operatorPasswordHash ===
+            'string' &&
+            data.operatorPasswordHash.length > 0
+          ) {
+            storedHash =
+              data.operatorPasswordHash
+          }
+        }
+      } catch (readError) {
+        console.error(
+          'Password settings error:',
+          readError
+        )
+      }
+
+      if (enteredHash === storedHash) {
+        setUnlocked(true)
+        setPassword('')
+        setError('')
+      } else {
+        setError('Incorrect password.')
+        setPassword('')
+      }
     } catch (err) {
       console.error(err)
-
-      setError('Incorrect password.')
-      setPassword('')
+      setError('Login error. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleLock() {
-    try {
-      await signOut(auth)
-    } catch (err) {
-      console.error(err)
-    }
-
+  function lockSite() {
     setUnlocked(false)
     setPassword('')
     setTracks([])
+    setInstructions('')
   }
 
   if (!unlocked) {
     return (
       <main className="login-page">
+
         <div className="login-card">
 
           <div className="magic-symbol">
@@ -200,8 +246,11 @@ export default function Landing({ onSelectTrack }) {
               value={password}
               placeholder="Enter Password"
               autoComplete="off"
+              maxLength={100}
               onChange={event =>
-                setPassword(event.target.value)
+                setPassword(
+                  event.target.value
+                )
               }
             />
 
@@ -227,6 +276,7 @@ export default function Landing({ onSelectTrack }) {
           </p>
 
         </div>
+
       </main>
     )
   }
@@ -248,7 +298,7 @@ export default function Landing({ onSelectTrack }) {
 
         <button
           className="small-logout"
-          onClick={handleLock}
+          onClick={lockSite}
         >
           🔒 Lock
         </button>
@@ -268,7 +318,9 @@ export default function Landing({ onSelectTrack }) {
             <button
               className="track-card"
               key={track.id}
-              onClick={() => onSelectTrack(track)}
+              onClick={() =>
+                onSelectTrack(track)
+              }
             >
 
               <div className="track-icon">
@@ -278,12 +330,15 @@ export default function Landing({ onSelectTrack }) {
               <div className="track-info">
 
                 <strong>
-                  {track.title || 'Untitled'}
+                  {track.title ||
+                    'Untitled'}
                 </strong>
 
                 <span>
                   {track.duration
-                    ? formatDuration(track.duration)
+                    ? formatDuration(
+                        track.duration
+                      )
                     : 'Audio track'}
                 </span>
 
@@ -314,22 +369,25 @@ export default function Landing({ onSelectTrack }) {
         <div className="instruction-content">
 
           {instructions ? (
-            formatInstructions(instructions)
+            formatInstructions(
+              instructions
+            )
           ) : (
             <>
               <p>
-                • Jab audience ko stage par bulao,
-                music slow ya band kar dena.
+                • Jab audience ko stage par
+                bulao, music slow ya band
+                kar dena.
               </p>
 
               <p>
-                • Jab main akele stage par magic
-                karu, sound full rakhna.
+                • Jab main akele stage par
+                magic karu, sound full rakhna.
               </p>
 
               <p>
-                • Show ke situation ke according
-                volume adjust karna.
+                • Show ke situation ke
+                according volume adjust karna.
               </p>
             </>
           )}
@@ -350,9 +408,12 @@ function formatDuration(seconds) {
   }
 
   const minutes = Math.floor(total / 60)
-  const secondsPart = Math.floor(total % 60)
+  const secondsPart =
+    Math.floor(total % 60)
 
-  return `${minutes}:${String(secondsPart).padStart(2, '0')}`
+  return `${minutes}:${String(
+    secondsPart
+  ).padStart(2, '0')}`
 }
 
 function formatInstructions(text) {
@@ -364,4 +425,4 @@ function formatInstructions(text) {
         {line}
       </p>
     ))
-              }
+}
