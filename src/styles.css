@@ -1,0 +1,1182 @@
+:root {
+  --bg: #050505;
+  --bg-soft: #0b0b0b;
+  --card: #111111;
+  --card-2: #171717;
+  --gold: #d4af37;
+  --gold-light: #f5d76e;
+  --white: #ffffff;
+  --muted: #9b9b9b;
+  --danger: #e54848;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   LOGIN PAGE
+========================================= */
+
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(212, 175, 55, 0.12),
+      transparent 35%
+    ),
+    #050505;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+
+  padding: 42px 28px;
+
+  text-align: center;
+
+  background:
+    linear-gradient(
+      145deg,
+      #151515,
+      #080808
+    );
+
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 24px;
+
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.7),
+    0 0 40px rgba(212, 175, 55, 0.05);
+}
+
+.magic-symbol {
+  font-size: 52px;
+  margin-bottom: 14px;
+}
+
+.login-card h1 {
+  margin: 0;
+
+  font-size: 32px;
+  letter-spacing: 4px;
+
+  color: var(--gold-light);
+}
+
+.subtitle {
+  margin: 12px 0 28px;
+
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.login-card form {
+  width: 100%;
+}
+
+.login-card input {
+  width: 100%;
+
+  padding: 15px 16px;
+
+  background: #090909;
+  color: white;
+
+  border: 1px solid #333;
+  border-radius: 12px;
+
+  outline: none;
+
+  font-size: 16px;
+  text-align: center;
+}
+
+.login-card input:focus {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 3px
+    rgba(212, 175, 55, 0.08);
+}
+
+.login-card button {
+  width: 100%;
+
+  margin-top: 14px;
+
+  padding: 15px;
+
+  border: none;
+  border-radius: 12px;
+
+  color: #050505;
+  background:
+    linear-gradient(
+      135deg,
+      var(--gold-light),
+      var(--gold)
+    );
+
+  font-weight: 800;
+  letter-spacing: 1px;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.login-card button:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 10px 30px
+    rgba(212, 175, 55, 0.2);
+}
+
+.error-text {
+  margin: 14px 0 0;
+  color: #ff6b6b;
+  font-size: 14px;
+}
+
+.login-note {
+  margin-top: 24px;
+
+  color: #666;
+  font-size: 12px;
+}
+
+/* =========================================
+   MUSIC LIST PAGE
+========================================= */
+
+.music-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  padding: 20px;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(212, 175, 55, 0.08),
+      transparent 30%
+    ),
+    #050505;
+}
+
+.music-header {
+  width: 100%;
+  max-width: 850px;
+
+  margin: 0 auto 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.brand-small {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.music-header h2 {
+  margin: 5px 0 0;
+
+  font-size: 27px;
+}
+
+.small-logout {
+  padding: 10px 14px;
+
+  color: white;
+  background: #151515;
+
+  border: 1px solid #333;
+  border-radius: 10px;
+
+  font-size: 13px;
+}
+
+.small-logout:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+/* =========================================
+   TRACK LIST
+========================================= */
+
+.track-list {
+  width: 100%;
+  max-width: 850px;
+
+  margin: 0 auto;
+}
+
+.track-card {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  margin-bottom: 10px;
+  padding: 16px;
+
+  text-align: left;
+
+  color: white;
+  background:
+    linear-gradient(
+      145deg,
+      #141414,
+      #0b0b0b
+    );
+
+  border: 1px solid #242424;
+  border-radius: 15px;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.track-card:hover {
+  transform: translateY(-2px);
+
+  border-color:
+    rgba(212, 175, 55, 0.55);
+
+  background: #151515;
+}
+
+.track-card:active {
+  transform: scale(0.99);
+}
+
+.track-icon {
+  width: 48px;
+  height: 48px;
+
+  flex: 0 0 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #050505;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--gold-light),
+      var(--gold)
+    );
+
+  border-radius: 50%;
+
+  font-size: 18px;
+}
+
+.track-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.track-info strong {
+  display: block;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  font-size: 16px;
+}
+
+.track-info span {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #888;
+  font-size: 12px;
+}
+
+.track-arrow {
+  color: var(--gold);
+
+  font-size: 30px;
+  line-height: 1;
+}
+
+.loading,
+.empty,
+.empty-state {
+  padding: 35px;
+
+  text-align: center;
+
+  color: #777;
+}
+
+/* =========================================
+   OPERATOR INSTRUCTIONS
+========================================= */
+
+.instructions-card {
+  width: 100%;
+  max-width: 850px;
+
+  margin: 24px auto 0;
+  padding: 20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #131313,
+      #090909
+    );
+
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 17px;
+}
+
+.section-title {
+  margin-bottom: 16px;
+
+  color: var(--gold-light);
+
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.instruction-content {
+  color: #d0d0d0;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.instruction-content p {
+  margin: 9px 0;
+}
+
+/* =========================================
+   FULL SCREEN PLAYER
+========================================= */
+
+.player-full {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 5000;
+
+  width: 100%;
+  height: 100%;
+
+  min-height: 100dvh;
+
+  overflow-y: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px 20px;
+
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      rgba(212, 175, 55, 0.12),
+      transparent 35%
+    ),
+    #030303;
+}
+
+.player-content {
+  width: 100%;
+  max-width: 650px;
+
+  text-align: center;
+}
+
+.player-close {
+  position: fixed;
+
+  top: 18px;
+  right: 18px;
+
+  z-index: 5100;
+
+  width: 46px;
+  height: 46px;
+
+  border: 1px solid #333;
+  border-radius: 50%;
+
+  color: white;
+  background: #111;
+
+  font-size: 20px;
+}
+
+.player-close:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+.player-icon {
+  font-size: 62px;
+
+  margin-bottom: 15px;
+}
+
+.player-title {
+  margin: 0;
+
+  color: white;
+
+  font-size: clamp(25px, 6vw, 42px);
+
+  line-height: 1.15;
+}
+
+.player-subtitle {
+  margin: 9px 0 30px;
+
+  color: var(--gold);
+
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.big-play {
+  width: 92px;
+  height: 92px;
+
+  margin: 20px auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  color: #050505;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--gold-light),
+      var(--gold)
+    );
+
+  font-size: 27px;
+
+  box-shadow:
+    0 15px 45px
+    rgba(212, 175, 55, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.big-play:hover {
+  transform: scale(1.05);
+
+  box-shadow:
+    0 18px 55px
+    rgba(212, 175, 55, 0.28);
+}
+
+.progress-area {
+  width: 100%;
+
+  margin: 12px auto 28px;
+}
+
+.time-row {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  color: #888;
+  font-size: 12px;
+}
+
+.progress-background {
+  width: 100%;
+  height: 6px;
+
+  overflow: hidden;
+
+  background: #222;
+  border-radius: 10px;
+}
+
+.progress-current {
+  height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--gold),
+      var(--gold-light)
+    );
+
+  border-radius: inherit;
+
+  transition: width 0.1s linear;
+}
+
+/* =========================================
+   LARGE VOLUME CONTROL
+========================================= */
+
+.volume-area {
+  width: 100%;
+
+  padding: 22px;
+
+  background: #101010;
+
+  border: 1px solid #252525;
+  border-radius: 18px;
+}
+
+.volume-label {
+  margin-bottom: 16px;
+
+  color: var(--gold-light);
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.volume-slider-large {
+  width: 100%;
+  height: 12px;
+
+  display: block;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  background: #292929;
+
+  border-radius: 20px;
+
+  outline: none;
+}
+
+.volume-slider-large::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+
+  width: 30px;
+  height: 30px;
+
+  border: 3px solid #050505;
+  border-radius: 50%;
+
+  background: var(--gold-light);
+
+  box-shadow:
+    0 0 0 2px var(--gold);
+}
+
+.volume-slider-large::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+
+  border: 3px solid #050505;
+  border-radius: 50%;
+
+  background: var(--gold-light);
+}
+
+.volume-value {
+  margin-top: 12px;
+
+  color: #aaa;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.player-instructions {
+  margin-top: 24px;
+
+  padding: 16px;
+
+  color: #aaa;
+
+  background: #0c0c0c;
+
+  border-radius: 14px;
+
+  text-align: left;
+}
+
+.player-instructions h3 {
+  margin: 0 0 10px;
+
+  color: var(--gold-light);
+
+  font-size: 14px;
+}
+
+.player-instructions p {
+  margin: 6px 0;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.player-error {
+  color: #ff6b6b;
+}
+
+/* =========================================
+   ADMIN MODAL
+========================================= */
+
+.admin-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 15px;
+
+  background:
+    rgba(0, 0, 0, 0.82);
+
+  backdrop-filter: blur(8px);
+
+  overflow-y: auto;
+}
+
+.admin-box {
+  position: relative;
+
+  width: 100%;
+  max-width: 760px;
+
+  max-height: 94vh;
+  max-height: 94dvh;
+
+  overflow-y: auto;
+
+  padding: 24px;
+
+  color: white;
+
+  background:
+    linear-gradient(
+      145deg,
+      #161616,
+      #080808
+    );
+
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 20px;
+
+  box-shadow:
+    0 30px 100px
+    rgba(0, 0, 0, 0.8);
+}
+
+.admin-close {
+  position: absolute;
+
+  top: 15px;
+  right: 15px;
+
+  width: 40px;
+  height: 40px;
+
+  border: 1px solid #333;
+  border-radius: 50%;
+
+  color: white;
+  background: #111;
+
+  font-size: 18px;
+}
+
+.admin-close:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+.admin-login {
+  max-width: 420px;
+
+  margin: 35px auto 20px;
+
+  text-align: center;
+}
+
+.admin-icon {
+  font-size: 45px;
+  margin-bottom: 10px;
+}
+
+.admin-login h2 {
+  margin: 0;
+
+  color: var(--gold-light);
+}
+
+.admin-login p {
+  color: #888;
+}
+
+.admin-login input,
+.admin-panel input,
+.admin-panel textarea {
+  width: 100%;
+
+  margin-top: 10px;
+  padding: 13px;
+
+  color: white;
+  background: #090909;
+
+  border: 1px solid #333;
+  border-radius: 10px;
+
+  outline: none;
+}
+
+.admin-login input:focus,
+.admin-panel input:focus,
+.admin-panel textarea:focus {
+  border-color: var(--gold);
+}
+
+.admin-primary {
+  width: 100%;
+
+  margin-top: 12px;
+  padding: 13px;
+
+  border: none;
+  border-radius: 10px;
+
+  color: #050505;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--gold-light),
+      var(--gold)
+    );
+
+  font-weight: 800;
+}
+
+.admin-title {
+  margin-bottom: 22px;
+
+  padding-right: 45px;
+}
+
+.admin-title span {
+  color: var(--gold);
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.admin-title h2 {
+  margin: 5px 0 0;
+}
+
+.admin-section {
+  margin-top: 18px;
+  padding: 18px;
+
+  background: #0e0e0e;
+
+  border: 1px solid #222;
+  border-radius: 15px;
+}
+
+.admin-section h3 {
+  margin: 0 0 12px;
+
+  color: var(--gold-light);
+
+  font-size: 17px;
+}
+
+.admin-section h4 {
+  margin: 0 0 8px;
+
+  color: #ddd;
+}
+
+.admin-note {
+  color: #777;
+  font-size: 12px;
+}
+
+.selected-file {
+  margin-top: 10px;
+
+  padding: 10px;
+
+  color: #aaa;
+  background: #151515;
+
+  border-radius: 8px;
+
+  font-size: 12px;
+
+  overflow-wrap: anywhere;
+}
+
+.admin-track-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+
+  max-height: 350px;
+
+  overflow-y: auto;
+}
+
+.admin-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 12px;
+
+  background: #151515;
+
+  border: 1px solid #242424;
+  border-radius: 10px;
+}
+
+.admin-track-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-track-info strong {
+  display: block;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.admin-track-info span {
+  display: inline-block;
+
+  margin-top: 5px;
+  margin-right: 10px;
+
+  color: #777;
+
+  font-size: 11px;
+}
+
+.admin-track-actions {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  justify-content: flex-end;
+
+  gap: 6px;
+}
+
+.admin-track-actions button,
+.admin-download {
+  padding: 8px 10px;
+
+  color: #ddd;
+  background: #222;
+
+  border: 1px solid #333;
+  border-radius: 7px;
+
+  font-size: 11px;
+
+  text-decoration: none;
+}
+
+.admin-track-actions button:hover,
+.admin-download:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+.admin-track-actions .danger {
+  color: #ff7777;
+}
+
+.password-group {
+  margin-top: 18px;
+
+  padding-top: 18px;
+
+  border-top: 1px solid #252525;
+}
+
+.admin-empty {
+  padding: 20px;
+
+  color: #777;
+
+  text-align: center;
+}
+
+.admin-logout {
+  width: 100%;
+
+  margin-top: 18px;
+  padding: 13px;
+
+  color: white;
+
+  background: #301010;
+
+  border: 1px solid #612222;
+  border-radius: 10px;
+
+  font-weight: 700;
+}
+
+.admin-logout:hover {
+  background: #481414;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+
+  .login-page {
+    padding: 15px;
+  }
+
+  .login-card {
+    padding: 35px 20px;
+    border-radius: 20px;
+  }
+
+  .login-card h1 {
+    font-size: 26px;
+    letter-spacing: 3px;
+  }
+
+  .music-page {
+    padding: 15px;
+  }
+
+  .music-header {
+    align-items: flex-start;
+  }
+
+  .music-header h2 {
+    font-size: 22px;
+  }
+
+  .small-logout {
+    padding: 8px 10px;
+  }
+
+  .track-card {
+    padding: 13px;
+  }
+
+  .track-icon {
+    width: 43px;
+    height: 43px;
+    flex-basis: 43px;
+  }
+
+  .player-full {
+    align-items: center;
+    padding: 25px 16px;
+  }
+
+  .player-icon {
+    font-size: 48px;
+  }
+
+  .big-play {
+    width: 82px;
+    height: 82px;
+  }
+
+  .volume-area {
+    padding: 18px 14px;
+  }
+
+  .admin-modal {
+    padding: 8px;
+  }
+
+  .admin-box {
+    max-height: 96vh;
+    max-height: 96dvh;
+
+    padding: 16px;
+
+    border-radius: 16px;
+  }
+
+  .admin-track {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-track-actions {
+    width: 100%;
+
+    justify-content: flex-start;
+  }
+
+  .admin-track-actions button,
+  .admin-download {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* =========================================
+   SMALL PHONES
+========================================= */
+
+@media (max-width: 380px) {
+
+  .login-card {
+    padding: 28px 16px;
+  }
+
+  .login-card h1 {
+    font-size: 23px;
+  }
+
+  .music-header h2 {
+    font-size: 19px;
+  }
+
+  .track-info strong {
+    font-size: 14px;
+  }
+
+  .player-title {
+    font-size: 24px;
+  }
+
+  .big-play {
+    width: 75px;
+    height: 75px;
+  }
+}
+
+/* =========================================
+   SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090909;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+  }
