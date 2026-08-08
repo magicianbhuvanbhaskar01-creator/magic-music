@@ -1,13 +1,23 @@
-const CLOUDINARY_CLOUD_NAME = 'u3elvi6g'
-const CLOUDINARY_UPLOAD_PRESET = 'magician_unsigned'
+const CLOUDINARY_CLOUD_NAME =
+  import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+
+const CLOUDINARY_UPLOAD_PRESET =
+  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
 export async function uploadToCloudinary(file) {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error('Cloudinary configuration missing')
+  }
+
   if (!file) {
     throw new Error('No audio file selected')
   }
 
-  if (file.size > 200 * 1024 * 1024) {
-    throw new Error('Audio file is larger than 200 MB')
+  // Maximum 200 MB
+  const MAX_SIZE = 200 * 1024 * 1024
+
+  if (file.size > MAX_SIZE) {
+    throw new Error('Audio file must be 200 MB or smaller')
   }
 
   const uploadUrl =
@@ -17,6 +27,8 @@ export async function uploadToCloudinary(file) {
 
   formData.append('file', file)
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
+
+  // Music files will stay separate from your main website photos/videos
   formData.append('folder', 'magic-music')
 
   const response = await fetch(uploadUrl, {
@@ -35,8 +47,9 @@ export async function uploadToCloudinary(file) {
   return {
     secure_url: data.secure_url,
     public_id: data.public_id,
-    bytes: data.bytes,
-    format: data.format,
-    duration: data.duration || 0
+    bytes: data.bytes || file.size,
+    duration: data.duration || 0,
+    format: data.format || '',
+    resource_type: data.resource_type || 'video'
   }
 }
