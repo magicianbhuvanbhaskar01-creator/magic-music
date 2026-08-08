@@ -1,12 +1,197 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Magic Music</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪄 Magic Music - Bhuvan Magic</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Disable right click
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        
+        // Disable screenshot (Printscreen)
+        document.addEventListener('keydown', e => {
+            if(e.key === 'PrintScreen' || (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+               (e.ctrlKey && e.key === 'p') || (e.ctrlKey && e.shiftKey && e.key === 'C')) {
+                e.preventDefault();
+            }
+        });
+        
+        // Disable inspect element
+        document.addEventListener('keydown', e => {
+            if(e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'J')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🪄 MAGIC MUSIC</h1>
+                <p>Bhuvan's Magical Background Music</p>
+            </div>
+            <div class="login-form">
+                <p class="welcome-text">Hello Magician Bhuvan</p>
+                <input type="password" id="passwordInput" placeholder="Enter Password" maxlength="50">
+                <button onclick="checkPassword()" class="login-btn">LOGIN</button>
+                <p id="errorMsg" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Music Player Page -->
+    <div id="playerPage" class="player-container" style="display: none;">
+        <div class="player-wrapper">
+            <div class="player-header">
+                <h2>🪄 Magic Music Player</h2>
+                <button class="admin-trigger-btn" onclick="adminClickCount()">
+                    <span id="clickCounter" style="display: none;">⚙️</span>
+                </button>
+            </div>
+
+            <div class="player-main">
+                <!-- Left: Playlist -->
+                <div class="playlist-section">
+                    <h3>📋 Playlist</h3>
+                    <div id="playlistContainer" class="playlist-list">
+                        <p class="no-music">Loading music...</p>
+                    </div>
+                </div>
+
+                <!-- Right: Player Controls -->
+                <div class="player-section">
+                    <div class="now-playing">
+                        <h4>🎵 Now Playing</h4>
+                        <p id="currentTrack">No track selected</p>
+                    </div>
+
+                    <audio id="audioPlayer"></audio>
+
+                    <div class="player-controls">
+                        <button id="playBtn" onclick="togglePlay()" class="control-btn">▶️ Play</button>
+                        <button onclick="stopMusic()" class="control-btn">⏹️ Stop</button>
+                        <button onclick="nextTrack()" class="control-btn">⏭️ Next</button>
+                    </div>
+
+                    <div class="volume-section">
+                        <label>🔊 Volume Control:</label>
+                        <div class="volume-control">
+                            <input type="range" id="volumeSlider" min="0" max="100" value="70" oninput="changeVolume()" class="volume-slider">
+                            <span id="volumeValue">70%</span>
+                        </div>
+                    </div>
+
+                    <div class="instructions-section">
+                        <h4>📝 Instructions For Operator</h4>
+                        <div id="instructionsDisplay" class="instructions-box">
+                            <p>Loading instructions...</p>
+                        </div>
+                    </div>
+
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <div class="time-display">
+                            <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminPanel" class="admin-modal" style="display: none;">
+        <div class="admin-backdrop" onclick="closeAdminPanel()"></div>
+        <div class="admin-dialog">
+            <div class="admin-header">
+                <h2>⚙️ Admin Control Panel</h2>
+                <button class="close-btn" onclick="closeAdminPanel()">✕</button>
+            </div>
+
+            <div class="admin-login" id="adminLoginBox">
+                <p>Enter Admin Password:</p>
+                <input type="password" id="adminPassword" placeholder="Admin Password" maxlength="50">
+                <button onclick="verifyAdminPassword()" class="submit-btn">Verify</button>
+                <p id="adminErrorMsg" class="error-msg"></p>
+            </div>
+
+            <div class="admin-content" id="adminContent" style="display: none;">
+                <div class="admin-tabs">
+                    <button class="tab-btn active" onclick="switchTab('upload')">Upload Music</button>
+                    <button class="tab-btn" onclick="switchTab('manage')">Manage Music</button>
+                    <button class="tab-btn" onclick="switchTab('instructions')">Instructions</button>
+                    <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+                </div>
+
+                <!-- Upload Tab -->
+                <div id="uploadTab" class="tab-content active">
+                    <h3>Upload New Music</h3>
+                    <div class="form-group">
+                        <label>Music Title:</label>
+                        <input type="text" id="musicTitle" placeholder="Enter music title" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Select Audio File:</label>
+                        <input type="file" id="musicFile" accept="audio/*">
+                        <p class="info-text">Max size: 200 MB | Formats: MP3, WAV, OGG, M4A</p>
+                    </div>
+                    <button onclick="uploadMusic()" class="submit-btn">Upload Music</button>
+                    <div id="uploadStatus" class="status-msg"></div>
+                </div>
+
+                <!-- Manage Tab -->
+                <div id="manageTab" class="tab-content">
+                    <h3>Manage Music</h3>
+                    <div id="musicList" class="music-list">
+                        <p class="loading-text">Loading music list...</p>
+                    </div>
+                </div>
+
+                <!-- Instructions Tab -->
+                <div id="instructionsTab" class="tab-content">
+                    <h3>Update Operator Instructions</h3>
+                    <div class="form-group">
+                        <label>Instructions:</label>
+                        <textarea id="instructionsText" placeholder="Enter instructions for operator..." rows="10" maxlength="1000"></textarea>
+                    </div>
+                    <button onclick="saveInstructions()" class="submit-btn">Save Instructions</button>
+                    <div id="instructionsStatus" class="status-msg"></div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="settingsTab" class="tab-content">
+                    <h3>Settings</h3>
+                    
+                    <div class="settings-group">
+                        <h4>Change Operator Password</h4>
+                        <input type="password" id="newOperatorPassword" placeholder="New Operator Password" maxlength="50">
+                        <button onclick="changeOperatorPassword()" class="submit-btn">Update Operator Password</button>
+                        <div id="operatorPasswordStatus" class="status-msg"></div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4>Change Admin Password</h4>
+                        <input type="password" id="newAdminPassword" placeholder="New Admin Password" maxlength="50">
+                        <button onclick="changeAdminPassword()" class="submit-btn">Update Admin Password</button>
+                        <div id="adminPasswordStatus" class="status-msg"></div>
+                    </div>
+
+                    <button onclick="logout()" class="logout-btn">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    
+    <!-- App Script -->
+    <script src="app.js"></script>
+</body>
 </html>
