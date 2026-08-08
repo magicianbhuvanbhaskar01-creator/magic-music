@@ -13,22 +13,20 @@ export async function uploadToCloudinary(file) {
     throw new Error('No audio file selected')
   }
 
-  // Maximum 200 MB
   const MAX_SIZE = 200 * 1024 * 1024
 
   if (file.size > MAX_SIZE) {
     throw new Error('Audio file must be 200 MB or smaller')
   }
 
+  // Audio files are uploaded as Cloudinary video resources
   const uploadUrl =
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`
 
   const formData = new FormData()
 
   formData.append('file', file)
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
-
-  // Music files will stay separate from your main website photos/videos
   formData.append('folder', 'magic-music')
 
   const response = await fetch(uploadUrl, {
@@ -40,7 +38,8 @@ export async function uploadToCloudinary(file) {
 
   if (!response.ok || !data.secure_url) {
     throw new Error(
-      data?.error?.message || 'Cloudinary upload failed'
+      data?.error?.message ||
+      'Cloudinary upload failed'
     )
   }
 
