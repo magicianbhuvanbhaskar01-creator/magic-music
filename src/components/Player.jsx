@@ -223,40 +223,44 @@ export default function Player({ track, onClose }) {
               {playing ? '❚❚' : '▶'}
             </button>
 
-            <div className="progress-area">
+<div className="progress-area">
 
-              <div className="time-row">
-                <span>
-                  {formatTime(
-                    currentTime
-                  )}
-                </span>
+  <div className="time-row">
+    <span>
+      {formatTime(currentTime)}
+    </span>
 
-                <span>
-                  {formatTime(
-                    duration
-                  )}
-                </span>
-              </div>
+    <span>
+      {formatTime(duration)}
+    </span>
+  </div>
 
-              <div className="progress-background">
-                <div
-                  className="progress-current"
-                  style={{
-                    width:
-                      duration > 0
-                        ? `${Math.min(
-                            100,
-                            (currentTime /
-                              duration) *
-                              100
-                          )}%`
-                        : '0%'
-                  }}
-                />
-              </div>
+  <input
+    className="progress-slider"
+    type="range"
+    min="0"
+    max={duration || 0}
+    step="0.1"
+    value={Math.min(
+      currentTime,
+      duration || 0
+    )}
+    onChange={event => {
+      const value =
+        Number(event.target.value)
 
-            </div>
+      if (audioRef.current) {
+        audioRef.current.currentTime =
+          value
+      }
+
+      setCurrentTime(value)
+    }}
+    disabled={!duration}
+    aria-label="Music progress"
+  />
+
+</div>
 
             <div className="volume-area">
 
