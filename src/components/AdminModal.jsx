@@ -291,11 +291,21 @@ export default function AdminModal({ onClose }) {
     setUploading(true)
 
     try {
-      const duration =
-        await getDuration(file)
+      let duration = 0
 
-      const cloudinary =
-        await uploadToCloudinary(file)
+try {
+  duration = await Promise.race([
+    getDuration(file),
+    new Promise(resolve =>
+      setTimeout(() => resolve(0), 5000)
+    )
+  ])
+} catch {
+  duration = 0
+}
+
+const cloudinary =
+  await uploadToCloudinary(file)
 
       await addDoc(
         collection(db, 'tracks'),
