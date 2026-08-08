@@ -50,6 +50,42 @@ async function hashPassword(password) {
     .join('')
 }
 
+function formatBytes(bytes) {
+  if (!bytes) return '0 Bytes'
+
+  const units = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(
+    Math.log(bytes) / Math.log(1024)
+  )
+
+  return (
+    (bytes / Math.pow(1024, i)).toFixed(
+      i === 0 ? 0 : 2
+    ) +
+    ' ' +
+    units[i]
+  )
+}
+
+function formatDuration(seconds) {
+  const totalSeconds = Math.max(
+    0,
+    Math.round(seconds || 0)
+  )
+
+  const minutes = Math.floor(
+    totalSeconds / 60
+  )
+
+  const remainingSeconds =
+    totalSeconds % 60
+
+  return (
+    minutes +
+    ':' +
+    String(remainingSeconds).padStart(2, '0')
+  )
+}
 function getDuration(file) {
   return new Promise(resolve => {
     try {
